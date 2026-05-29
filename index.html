@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PRÓXIMO NÍVEL</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#060a12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Próx. Nível">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Barlow+Condensed:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ═══════ RESET & TOKENS ═══════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a12;--bg2:#0a1020;--surface:#111a2e;--surface2:#162035;
+  --border:#1c2d4a;--border2:#243860;
+  --blue:#3d8fff;--blue-dim:#1a4a8a;--blue-glow:rgba(61,143,255,.25);
+  --gold:#e8c55a;--gold-dim:#7a6020;
+  --green:#3dffb0;--green-dim:#1a5a40;
+  --red:#ff4d6a;--red-dim:#5a1a25;
+  --purple:#a87fff;--orange:#ff8c3d;
+  --text:#c8d8ee;--text-dim:#6a85a8;--text-muted:#3a5070;
+  --radius:10px;--radius-sm:6px;
+  --font-title:'Cinzel',serif;--font-body:'Barlow Condensed',sans-serif;--font-mono:'Share Tech Mono',monospace;
+  --nav-h:52px;--bottom-nav:60px;
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+button{font-family:var(--font-body)}
+input,select,textarea{font-family:var(--font-body)}
+
+/* ═══════ CANVAS ═══════ */
+#bg-canvas{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35}
+
+/* ═══════ LAYOUT ═══════ */
+#root{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;padding-bottom:var(--bottom-nav)}
+
+/* ═══════ HEADER ═══════ */
+.header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(6,10,18,.94);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:0 14px;height:var(--nav-h);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.logo{font-family:var(--font-title);font-weight:900;font-size:13px;letter-spacing:4px;color:var(--text);text-transform:uppercase;white-space:nowrap}
+.logo em{font-style:normal;color:var(--blue);text-shadow:0 0 18px var(--blue-glow)}
+.header-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.hchip{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:var(--radius-sm);border:1px solid;white-space:nowrap}
+.hchip-xp{color:var(--blue);border-color:var(--blue-dim);background:rgba(61,143,255,.07)}
+.hchip-coins{color:var(--gold);border-color:var(--gold-dim);background:rgba(232,197,90,.07)}
+.header-rank{font-family:var(--font-title);font-size:13px;font-weight:700;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid;transition:all .3s;flex-shrink:0}
+
+/* ═══════ BOTTOM NAV (mobile-first) ═══════ */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(6,10,18,.96);backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  display:flex;height:var(--bottom-nav);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bnav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;border:none;background:none;color:var(--text-muted);cursor:pointer;
+  font-family:var(--font-body);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
+  transition:color .2s;padding:0 2px;position:relative;
+}
+.bnav-btn.active{color:var(--blue)}
+.bnav-btn .bnav-icon{font-size:18px;line-height:1}
+.bnav-badge{
+  position:absolute;top:6px;right:calc(50% - 18px);
+  background:var(--red);color:#fff;border-radius:50%;
+  width:14px;height:14px;font-size:8px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* Desktop: side nav instead of bottom nav */
+@media(min-width:700px){
+  #root{padding-bottom:0;flex-direction:column}
+  .bottom-nav{display:none}
+  .top-nav{display:flex}
+}
+.top-nav{
+  display:none;
+  gap:2px;padding:0 16px;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  overflow-x:auto;
+}
+.top-nav::-webkit-scrollbar{height:0}
+.tnav-btn{
+  font-family:var(--font-body);font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-muted);background:none;border:none;
+  border-bottom:2px solid transparent;padding:11px 14px;cursor:pointer;white-space:nowrap;transition:all .2s;
+  position:relative;
+}
+.tnav-btn:hover{color:var(--text-dim)}
+.tnav-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tnav-btn .tbadge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:15px;height:15px;background:var(--red);color:#fff;
+  border-radius:50%;font-size:8px;font-weight:700;margin-left:4px;vertical-align:middle;
+}
+
+/* ═══════ CONTENT ═══════ */
+.content{flex:1;padding:14px;max-width:860px;width:100%;margin:0 auto}
+@media(min-width:600px){.content{padding:20px}}
+
+/* ═══════ PROFILE HERO ═══════ */
+.profile-hero{
+  background:linear-gradient(135deg,var(--surface) 0%,var(--bg2) 100%);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;margin-bottom:14px;position:relative;overflow:hidden;
+}
+.profile-hero::before{content:'';position:absolute;top:-40%;right:-5%;width:250px;height:250px;background:radial-gradient(circle,rgba(61,143,255,.06) 0%,transparent 70%);pointer-events:none}
+.profile-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px}
+.avatar-wrap{position:relative;flex-shrink:0}
+.avatar{
+  width:68px;height:68px;border-radius:50%;background:var(--bg);
+  border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-title);font-size:24px;font-weight:700;color:var(--blue);
+  cursor:pointer;transition:all .3s;
+}
+.avatar:hover{border-color:var(--blue);transform:scale(1.05)}
+.avatar-rank{
+  position:absolute;bottom:0;right:0;width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-title);font-size:9px;font-weight:700;
+  border:2px solid var(--bg);z-index:2;
+}
+.profile-meta{flex:1;min-width:0}
+.profile-name{font-family:var(--font-title);font-size:18px;font-weight:700;color:#fff;margin-bottom:3px;cursor:pointer;line-height:1.2}
+.profile-name:hover{color:var(--blue)}
+.profile-title{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.profile-stats{display:flex;gap:16px;flex-wrap:wrap}
+.pstat-val{font-family:var(--font-mono);font-size:16px;font-weight:700;color:var(--blue);display:block}
+.pstat-val.gold{color:var(--gold)}.pstat-val.purple{color:var(--purple)}
+.pstat-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-top:1px}
+
+/* XP Bar */
+.xp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.xp-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim)}
+.xp-pct{font-family:var(--font-mono);font-size:11px;color:var(--blue)}
+.xp-track{height:7px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.xp-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue-dim),var(--blue));transition:width .8s cubic-bezier(.4,0,.2,1);position:relative}
+.xp-fill::after{content:'';position:absolute;top:0;right:0;width:20px;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4));animation:shimmer 1.5s infinite}
+@keyframes shimmer{0%,100%{opacity:0}50%{opacity:1}}
+.xp-sub{font-size:10px;color:var(--text-muted);margin-top:3px;text-align:right}
+
+/* Ranks scroll row */
+.ranks-scroll{overflow-x:auto;padding-bottom:4px;margin-top:14px}
+.ranks-scroll::-webkit-scrollbar{height:3px}
+.ranks-scroll::-webkit-scrollbar-thumb{background:var(--border2)}
+.ranks-row{display:flex;gap:5px;min-width:max-content}
+.rank-pip{
+  text-align:center;padding:6px 8px 5px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--bg);
+  opacity:.25;transition:all .3s;min-width:52px;
+}
+.rank-pip.unlocked{opacity:.6}
+.rank-pip.current{opacity:1;border-color:currentColor;box-shadow:0 0 8px currentColor}
+.rank-pip-letter{font-family:var(--font-title);font-size:13px;font-weight:700;display:block;margin-bottom:1px}
+.rank-pip-name{font-size:8px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);line-height:1.2}
+
+/* ═══════ STATS GRID ═══════ */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+@media(min-width:500px){.stats-grid{grid-template-columns:repeat(4,1fr)}}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;transition:border-color .2s}
+.stat-card:hover{border-color:var(--border2)}
+.stat-card-icon{font-size:18px;margin-bottom:4px;display:block}
+.stat-card-val{font-family:var(--font-mono);font-size:18px;font-weight:700;display:block;margin-bottom:1px}
+.stat-card-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted)}
+
+/* ═══════ SECTION HEAD ═══════ */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.section-title{font-family:var(--font-title);font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim)}
+
+/* ═══════ BUTTONS ═══════ */
+.btn{font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;border:1px solid;border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-primary{background:rgba(61,143,255,.1);border-color:var(--blue-dim);color:var(--blue)}
+.btn-primary:hover{background:rgba(61,143,255,.2);border-color:var(--blue)}
+.btn-ghost{background:transparent;border-color:var(--border2);color:var(--text-dim)}
+.btn-ghost:hover{border-color:var(--text-dim);color:var(--text)}
+.btn-danger{background:rgba(255,77,106,.1);border-color:var(--red-dim);color:var(--red)}
+.btn-gold{background:rgba(232,197,90,.1);border-color:var(--gold-dim);color:var(--gold)}
+.btn-gold:hover{background:rgba(232,197,90,.2);border-color:var(--gold)}
+.btn-sm{padding:5px 10px;font-size:10px}
+.btn-icon{width:26px;height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);font-size:13px;background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;transition:all .2s;flex-shrink:0}
+.btn-icon:hover{border-color:var(--red);color:var(--red)}
+
+/* ═══════ MISSION CARDS ═══════ */
+.mission-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px 12px 12px 14px;margin-bottom:7px;
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  transition:all .2s;user-select:none;position:relative;overflow:hidden;
+}
+.mission-card:hover{border-color:var(--border2);transform:translateX(2px)}
+.mission-card.done{opacity:.4}
+.mission-card.done .mission-title{text-decoration:line-through}
+.mission-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .25s}
+.mission-card.done .mission-check{background:var(--blue);border-color:var(--blue);color:var(--bg)}
+.mission-info{flex:1;min-width:0}
+.mission-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.3}
+.mission-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.diff-chip{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:3px}
+.reward-chip{font-family:var(--font-mono);font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px}
+.type-chip{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);border:1px solid var(--border);padding:1px 5px;border-radius:3px}
+
+/* ═══════ HABITS ═══════ */
+.habit-cols{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:520px){.habit-cols{grid-template-columns:1fr 1fr}}
+.habit-col-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.habit-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:9px;
+  cursor:pointer;transition:all .2s;user-select:none;
+}
+.habit-card:hover{border-color:var(--border2)}
+.habit-card.checked-good{background:rgba(61,255,176,.05);border-color:var(--green-dim)}
+.habit-card.checked-bad{background:rgba(255,77,106,.05);border-color:var(--red-dim)}
+.habit-toggle{width:17px;height:17px;border-radius:4px;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .2s}
+.checked-good .habit-toggle{background:var(--green);border-color:var(--green);color:var(--bg)}
+.checked-bad .habit-toggle{background:var(--red);border-color:var(--red);color:var(--bg)}
+.habit-name{flex:1;font-size:13px;font-weight:500;color:var(--text)}
+.habit-xp{font-family:var(--font-mono);font-size:11px;font-weight:600;white-space:nowrap}
+
+/* ═══════ SHOP ═══════ */
+.shop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:500px){.shop-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:700px){.shop-grid{grid-template-columns:repeat(4,1fr)}}
+.shop-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 10px;text-align:center;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:6px}
+.shop-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.shop-card.cant-afford{opacity:.38}
+.shop-icon{font-size:26px;line-height:1}
+.shop-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.2}
+.shop-cost{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--gold)}
+.shop-cat{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted)}
+
+/* ═══════ HISTORY ═══════ */
+.history-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:5px;display:flex;align-items:center;gap:10px}
+.history-icon{font-size:14px;flex-shrink:0}
+.history-desc{flex:1;font-size:13px;color:var(--text-dim);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history-xp{font-family:var(--font-mono);font-size:12px;font-weight:600;white-space:nowrap}
+.history-date{font-size:9px;color:var(--text-muted);letter-spacing:.5px;white-space:nowrap}
+
+/* ═══════ RANKS TABLE TAB ═══════ */
+.ranks-table{width:100%;border-collapse:collapse}
+.ranks-table th,.ranks-table td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);font-size:12px}
+.ranks-table th{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);font-weight:600;background:var(--bg2)}
+.ranks-table tr:hover td{background:rgba(255,255,255,.02)}
+.rank-row-current td{background:rgba(61,143,255,.07)!important}
+.rank-id-cell{font-family:var(--font-title);font-size:13px;font-weight:700}
+.rank-name-cell{font-weight:500}
+.rank-xp-cell{font-family:var(--font-mono);font-size:11px;color:var(--text-dim)}
+
+/* ═══════ MODAL ═══════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(5px);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0;animation:fadeIn .15s ease}
+@media(min-width:520px){.modal-overlay{align-items:center;padding:16px}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--radius) var(--radius) 0 0;
+  padding:20px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;
+  animation:slideUp .22s cubic-bezier(.4,0,.2,1);
+}
+@media(min-width:520px){.modal{border-radius:var(--radius)}}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-title{font-family:var(--font-title);font-size:14px;font-weight:700;letter-spacing:2px;color:#fff;margin-bottom:18px;text-transform:uppercase}
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font-body);font-size:15px;padding:9px 11px;outline:none;transition:border-color .2s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--blue)}
+.form-textarea{min-height:55px;resize:vertical}
+.diff-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.diff-pick-btn{padding:7px 3px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);font-family:var(--font-body);font-size:10px;font-weight:600;text-align:center;cursor:pointer;transition:all .2s;line-height:1.3}
+.modal-actions{display:flex;gap:7px;margin-top:18px}
+
+/* ═══════ TOAST ═══════ */
+#toast-container{position:fixed;bottom:calc(var(--bottom-nav) + 10px);left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column-reverse;gap:7px;pointer-events:none}
+@media(min-width:700px){#toast-container{bottom:20px}}
+.toast{font-family:var(--font-body);font-size:13px;font-weight:600;padding:9px 18px;border-radius:var(--radius);border:1px solid;white-space:nowrap;animation:toastIn .3s ease forwards;pointer-events:none}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateY(-8px)}}
+.toast-xp{background:rgba(6,10,18,.97);border-color:var(--blue);color:var(--blue)}
+.toast-coins{background:rgba(6,10,18,.97);border-color:var(--gold);color:var(--gold)}
+.toast-bad{background:rgba(6,10,18,.97);border-color:var(--red);color:var(--red)}
+.toast-rank{background:rgba(6,10,18,.97);border-color:var(--gold);color:var(--gold);font-size:15px}
+.toast-ok{background:rgba(6,10,18,.97);border-color:var(--green);color:var(--green)}
+
+/* ═══════ RANK UP FLASH ═══════ */
+#rankup-flash{position:fixed;inset:0;z-index:500;pointer-events:none;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+#rankup-flash.show{display:flex;animation:rankFlash 2s ease forwards}
+@keyframes rankFlash{0%{opacity:0}15%{opacity:1}75%{opacity:1}100%{opacity:0}}
+.rankup-bg{position:absolute;inset:0;background:radial-gradient(circle at center,rgba(232,197,90,.12) 0%,transparent 65%)}
+.rankup-text{font-family:var(--font-title);font-size:clamp(28px,8vw,54px);font-weight:900;letter-spacing:6px;text-transform:uppercase;text-align:center;position:relative;z-index:1;animation:rankPop .4s cubic-bezier(.4,0,.2,1) .2s both}
+@keyframes rankPop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.rankup-sub{font-family:var(--font-body);font-size:14px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--gold);position:relative;z-index:1}
+
+/* ═══════ MISC ═══════ */
+.empty-state{text-align:center;padding:36px 16px;color:var(--text-muted);font-size:13px}
+.empty-state strong{display:block;font-size:22px;margin-bottom:5px;opacity:.25}
+.gap-top{margin-top:14px}.gap-top-sm{margin-top:7px}
+.divider{height:1px;background:var(--border);margin:14px 0}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div id="root"></div>
+<div id="toast-container"></div>
+<div id="rankup-flash">
+  <div class="rankup-bg"></div>
+  <div class="rankup-text" id="rankup-letter"></div>
+  <div class="rankup-sub"  id="rankup-name"></div>
+</div>
+
+<!-- Firebase SDK (compat — funciona em arquivo local sem bundler) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   FIREBASE CONFIG
+══════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDyehAVMT_Gn8mORGKbQchRyk6RV-FU4CQ",
+  authDomain: "sistema-ricardo.firebaseapp.com",
+  projectId: "sistema-ricardo",
+  storageBucket: "sistema-ricardo.firebasestorage.app",
+  messagingSenderId: "21383814498",
+  appId: "1:21383814498:web:a1ffa932383c0cb00a603b"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// ID fixo do documento — um único doc guarda todo o estado do app
+const DOC_REF = db.collection('usuarios').doc('ricardo');
+
+/* ══════════════════════════════════════════════════════
+   SYNC — Firebase ↔ localStorage
+══════════════════════════════════════════════════════ */
+let _syncUnsubscribe = null;
+let _remoteSaving = false;  // flag para evitar loop write→snapshot→write
+
+// Salva no Firestore (debounced 800ms para não bater a cota)
+let _saveTimer = null;
+function saveRemote(data) {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    try {
+      _remoteSaving = true;
+      await DOC_REF.set(data, { merge: false });
+      _remoteSaving = false;
+      showSyncDot('ok');
+    } catch(e) {
+      _remoteSaving = false;
+      showSyncDot('err');
+      console.warn('Firestore save error:', e);
+    }
+  }, 800);
+}
+
+// Escuta mudanças em tempo real (outro dispositivo salva → este atualiza)
+function startSync() {
+  showSyncDot('connecting');
+  _syncUnsubscribe = DOC_REF.onSnapshot(snap => {
+    if (_remoteSaving) return; // foi a gente que salvou, ignorar
+    if (!snap.exists) return;  // doc ainda não existe
+    const remote = snap.data();
+    if (!remote) return;
+    // Merge: dados remotos viram o novo state (preserva tab local)
+    const currentTab = state.tab;
+    state = { ...defaultState(), ...remote, tab: currentTab, modal: null };
+    localStorage.setItem(KEY, JSON.stringify({ ...state, modal: null }));
+    render();
+    showSyncDot('ok');
+  }, err => {
+    showSyncDot('err');
+    console.warn('Firestore listen error:', err);
+  });
+}
+
+function stopSync() {
+  if (_syncUnsubscribe) { _syncUnsubscribe(); _syncUnsubscribe = null; }
+}
+
+// Indicador visual de sync no header
+function showSyncDot(status) {
+  const dot = document.getElementById('sync-dot');
+  if (!dot) return;
+  const map = {
+    connecting: { color: '#e8c55a', title: 'Conectando ao Firebase...' },
+    ok:         { color: '#3dffb0', title: 'Sincronizado' },
+    err:        { color: '#ff4d6a', title: 'Erro de sincronização (usando cache local)' },
+    offline:    { color: '#6a85a8', title: 'Offline — usando cache local' },
+  };
+  const s = map[status] || map.offline;
+  dot.style.background = s.color;
+  dot.title = s.title;
+  dot.style.boxShadow = `0 0 6px ${s.color}`;
+}
+
+/* ══════════════════════════════════════════════════════
+   RANKS — 55 níveis exponenciais (E1→S5)
+══════════════════════════════════════════════════════ */
+const RANKS = [
+  { id:'E1',  tier:'E', name:'Iniciante',      color:'#6a85a8', xpMin:0,                    xpNext:1000                  },
+  { id:'E2',  tier:'E', name:'Aprendiz',       color:'#6a85a8', xpMin:1000,                 xpNext:5000                  },
+  { id:'E3',  tier:'E', name:'Novato',         color:'#6a85a8', xpMin:5000,                 xpNext:15000                 },
+  { id:'E4',  tier:'E', name:'Estudante',      color:'#6a85a8', xpMin:15000,                xpNext:40000                 },
+  { id:'E5',  tier:'E', name:'Guerreiro',      color:'#6a85a8', xpMin:40000,                xpNext:100000                },
+  { id:'E6',  tier:'E', name:'Lutador',        color:'#6a85a8', xpMin:100000,               xpNext:250000                },
+  { id:'E7',  tier:'E', name:'Veterano',       color:'#6a85a8', xpMin:250000,               xpNext:600000                },
+  { id:'E8',  tier:'E', name:'Especialista',   color:'#6a85a8', xpMin:600000,               xpNext:1500000               },
+  { id:'E9',  tier:'E', name:'Expert',         color:'#6a85a8', xpMin:1500000,              xpNext:4000000               },
+  { id:'E10', tier:'E', name:'Élite E',        color:'#6a85a8', xpMin:4000000,              xpNext:10000000              },
+  { id:'D1',  tier:'D', name:'Rastreador',     color:'#3dffb0', xpMin:10000000,             xpNext:25000000              },
+  { id:'D2',  tier:'D', name:'Explorador',     color:'#3dffb0', xpMin:25000000,             xpNext:60000000              },
+  { id:'D3',  tier:'D', name:'Buscador',       color:'#3dffb0', xpMin:60000000,             xpNext:140000000             },
+  { id:'D4',  tier:'D', name:'Investigador',   color:'#3dffb0', xpMin:140000000,            xpNext:320000000             },
+  { id:'D5',  tier:'D', name:'Descobridor',    color:'#3dffb0', xpMin:320000000,            xpNext:750000000             },
+  { id:'D6',  tier:'D', name:'Desbravador',    color:'#3dffb0', xpMin:750000000,            xpNext:1800000000            },
+  { id:'D7',  tier:'D', name:'Pioneiro',       color:'#3dffb0', xpMin:1800000000,           xpNext:4200000000            },
+  { id:'D8',  tier:'D', name:'Vanguarda',      color:'#3dffb0', xpMin:4200000000,           xpNext:10000000000           },
+  { id:'D9',  tier:'D', name:'Sentinela',      color:'#3dffb0', xpMin:10000000000,          xpNext:24000000000           },
+  { id:'D10', tier:'D', name:'Élite D',        color:'#3dffb0', xpMin:24000000000,          xpNext:60000000000           },
+  { id:'C1',  tier:'C', name:'Caçador',        color:'#3d8fff', xpMin:60000000000,          xpNext:140000000000          },
+  { id:'C2',  tier:'C', name:'Perseguidor',    color:'#3d8fff', xpMin:140000000000,         xpNext:330000000000          },
+  { id:'C3',  tier:'C', name:'Caçador Hábil',  color:'#3d8fff', xpMin:330000000000,         xpNext:800000000000          },
+  { id:'C4',  tier:'C', name:'Predador',       color:'#3d8fff', xpMin:800000000000,         xpNext:2000000000000         },
+  { id:'C5',  tier:'C', name:'Estrategista',   color:'#3d8fff', xpMin:2000000000000,        xpNext:5000000000000         },
+  { id:'C6',  tier:'C', name:'Comandante',     color:'#3d8fff', xpMin:5000000000000,        xpNext:12000000000000        },
+  { id:'C7',  tier:'C', name:'Capitão',        color:'#3d8fff', xpMin:12000000000000,       xpNext:30000000000000        },
+  { id:'C8',  tier:'C', name:'Major',          color:'#3d8fff', xpMin:30000000000000,       xpNext:75000000000000        },
+  { id:'C9',  tier:'C', name:'General',        color:'#3d8fff', xpMin:75000000000000,       xpNext:190000000000000       },
+  { id:'C10', tier:'C', name:'Élite C',        color:'#3d8fff', xpMin:190000000000000,      xpNext:500000000000000       },
+  { id:'B1',  tier:'B', name:'Gladiador',      color:'#a87fff', xpMin:500000000000000,      xpNext:1200000000000000      },
+  { id:'B2',  tier:'B', name:'Campeão',        color:'#a87fff', xpMin:1200000000000000,     xpNext:3000000000000000      },
+  { id:'B3',  tier:'B', name:'Herói',          color:'#a87fff', xpMin:3000000000000000,     xpNext:8000000000000000      },
+  { id:'B4',  tier:'B', name:'Paladino',       color:'#a87fff', xpMin:8000000000000000,     xpNext:20000000000000000     },
+  { id:'B5',  tier:'B', name:'Protetor',       color:'#a87fff', xpMin:20000000000000000,    xpNext:50000000000000000     },
+  { id:'B6',  tier:'B', name:'Guardião',       color:'#a87fff', xpMin:50000000000000000,    xpNext:130000000000000000    },
+  { id:'B7',  tier:'B', name:'Cruzado',        color:'#a87fff', xpMin:130000000000000000,   xpNext:340000000000000000    },
+  { id:'B8',  tier:'B', name:'Arcanjo',        color:'#a87fff', xpMin:340000000000000000,   xpNext:900000000000000000    },
+  { id:'B9',  tier:'B', name:'Serafim',        color:'#a87fff', xpMin:900000000000000000,   xpNext:2400000000000000000   },
+  { id:'B10', tier:'B', name:'Élite B',        color:'#a87fff', xpMin:2400000000000000000,  xpNext:6500000000000000000   },
+  { id:'A1',  tier:'A', name:'Mestre',         color:'#ff8c3d', xpMin:6500000000000000000,  xpNext:18000000000000000000  },
+  { id:'A2',  tier:'A', name:'Arquimestre',    color:'#ff8c3d', xpMin:18000000000000000000, xpNext:50000000000000000000  },
+  { id:'A3',  tier:'A', name:'Lendário',       color:'#ff8c3d', xpMin:50000000000000000000, xpNext:140000000000000000000 },
+  { id:'A4',  tier:'A', name:'Mítico',         color:'#ff8c3d', xpMin:140000000000000000000,xpNext:400000000000000000000 },
+  { id:'A5',  tier:'A', name:'Imortal',        color:'#ff8c3d', xpMin:400000000000000000000,xpNext:1.1e21               },
+  { id:'A6',  tier:'A', name:'Semideus',       color:'#ff8c3d', xpMin:1.1e21,               xpNext:3e21                 },
+  { id:'A7',  tier:'A', name:'Titan',          color:'#ff8c3d', xpMin:3e21,                 xpNext:8.5e21               },
+  { id:'A8',  tier:'A', name:'Overlord',       color:'#ff8c3d', xpMin:8.5e21,               xpNext:2.4e22               },
+  { id:'A9',  tier:'A', name:'Supremo',        color:'#ff8c3d', xpMin:2.4e22,               xpNext:7e22                 },
+  { id:'A10', tier:'A', name:'Élite A',        color:'#ff8c3d', xpMin:7e22,                 xpNext:2e23                 },
+  { id:'S1',  tier:'S', name:'Monarca',        color:'#e8c55a', xpMin:2e23,                 xpNext:6e23                 },
+  { id:'S2',  tier:'S', name:'Soberano',       color:'#e8c55a', xpMin:6e23,                 xpNext:2e24                 },
+  { id:'S3',  tier:'S', name:'Imperador',      color:'#e8c55a', xpMin:2e24,                 xpNext:7e24                 },
+  { id:'S4',  tier:'S', name:'Divino',         color:'#e8c55a', xpMin:7e24,                 xpNext:2.5e25               },
+  { id:'S5',  tier:'S', name:'Monarca das Sombras', color:'#e8c55a', xpMin:2.5e25,          xpNext:null                 },
+];
+
+const DIFFS = [
+  { id:'easy',    label:'Fácil',   xp:615,   coins:59,   color:'#3dffb0', bg:'rgba(61,255,176,.12)',  border:'rgba(61,255,176,.3)'  },
+  { id:'normal',  label:'Normal',  xp:2715,  coins:255,  color:'#3d8fff', bg:'rgba(61,143,255,.12)',  border:'rgba(61,143,255,.3)'  },
+  { id:'hard',    label:'Difícil', xp:9715,  coins:850,  color:'#a87fff', bg:'rgba(168,127,255,.12)', border:'rgba(168,127,255,.3)' },
+  { id:'extreme', label:'Extrema', xp:34000, coins:2250, color:'#ff8c3d', bg:'rgba(255,140,61,.12)',  border:'rgba(255,140,61,.3)'  },
+  { id:'absurd',  label:'Absurda', xp:68000, coins:5500, color:'#e8c55a', bg:'rgba(232,197,90,.12)',  border:'rgba(232,197,90,.3)'  },
+];
+
+const TYPES  = ['Diária','Semanal','Única'];
+const CATS   = ['Saúde','Estudo','Produtividade','Bem-estar','Outro'];
+const SCATS  = ['Lazer','Comida','Compras','Experiência'];
+
+/* ══════════ STATE ══════════ */
+const KEY = 'proximo-nivel-v3';
+
+function defaultState(){
+  return {
+    tab:'profile',
+    player:{name:'Caçador',xp:0,coins:0},
+    missions:[
+      {id:uid(),title:'Treinar por 30 minutos',diff:'normal',type:'Diária',done:false,notes:''},
+      {id:uid(),title:'Ler 10 páginas de um livro',diff:'easy',type:'Diária',done:false,notes:''},
+      {id:uid(),title:'Terminar o projeto da semana',diff:'hard',type:'Semanal',done:false,notes:''},
+    ],
+    habits:{
+      good:[
+        {id:uid(),name:'Academia',   xp:200,cat:'Saúde',     checked:false},
+        {id:uid(),name:'Meditação',  xp:100,cat:'Bem-estar', checked:false},
+        {id:uid(),name:'Leitura',    xp:150,cat:'Estudo',    checked:false},
+        {id:uid(),name:'Dormir 8h',  xp:120,cat:'Saúde',     checked:false},
+      ],
+      bad:[
+        {id:uid(),name:'Procrastinar',xp:150,cat:'Produtividade',checked:false},
+        {id:uid(),name:'Celular >3h', xp:100,cat:'Bem-estar',    checked:false},
+        {id:uid(),name:'Pular treino',xp:200,cat:'Saúde',        checked:false},
+      ]
+    },
+    shop:[
+      {id:uid(),name:'Netflix 1 ep', icon:'🎬',cost:300, cat:'Lazer'  },
+      {id:uid(),name:'Café especial',icon:'☕',cost:150, cat:'Comida' },
+      {id:uid(),name:'Jogo novo',    icon:'🎮',cost:2000,cat:'Compras'},
+      {id:uid(),name:'Jantar fora',  icon:'🍣',cost:800, cat:'Comida' },
+      {id:uid(),name:'Dia de folga', icon:'🏖️',cost:5000,cat:'Lazer'  },
+      {id:uid(),name:'Comprar livro',icon:'📚',cost:400, cat:'Compras'},
+    ],
+    history:[],
+    modal:null,
+  };
+}
+
+let state = load();
+
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){const s=JSON.parse(raw);const d=defaultState();return{...d,...s,player:{...d.player,...s.player},modal:null};}
+  }catch(e){}
+  return defaultState();
+}
+function save(){
+  const data={...state,modal:null};
+  localStorage.setItem(KEY,JSON.stringify(data));
+  saveRemote(data);  // ← Firebase sync
+}
+function setState(patch,skipSave=false){state={...state,...patch};if(!skipSave)save();render()}
+
+/* ══════════ HELPERS ══════════ */
+function uid(){return Math.random().toString(36).slice(2,10)}
+function getRank(xp){let r=RANKS[0];for(const rk of RANKS){if(xp>=rk.xpMin)r=rk;}return r}
+function getXpProgress(xp){
+  const r=getRank(xp);if(!r.xpNext)return 100;
+  return Math.min(100,Math.round(((xp-r.xpMin)/(r.xpNext-r.xpMin))*100));
+}
+function getDiff(id){return DIFFS.find(d=>d.id===id)||DIFFS[0]}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function fmtDate(ts){if(!ts)return'';const d=new Date(ts);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}
+
+function fmtXP(n){
+  if(n>=1e24) return(n/1e24).toFixed(1)+'Sp';
+  if(n>=1e21) return(n/1e21).toFixed(1)+'Sx';
+  if(n>=1e18) return(n/1e18).toFixed(1)+'Qi';
+  if(n>=1e15) return(n/1e15).toFixed(1)+'Qa';
+  if(n>=1e12) return(n/1e12).toFixed(1)+'T';
+  if(n>=1e9)  return(n/1e9).toFixed(1)+'B';
+  if(n>=1e6)  return(n/1e6).toFixed(1)+'M';
+  if(n>=1e3)  return(n/1e3).toFixed(1)+'K';
+  return String(Math.round(n));
+}
+
+/* ══════════ TOAST ══════════ */
+function toast(msg,type='xp',dur=2500){
+  const el=document.createElement('div');
+  el.className=`toast toast-${type}`;el.textContent=msg;
+  document.getElementById('toast-container').prepend(el);
+  setTimeout(()=>{el.style.animation='toastOut .3s ease forwards';setTimeout(()=>el.remove(),300)},dur);
+}
+
+/* ══════════ RANK UP ══════════ */
+function checkRankUp(oldXp,newXp){
+  const o=getRank(oldXp),n=getRank(newXp);
+  if(n.id!==o.id)triggerRankUp(n);
+}
+function triggerRankUp(rank){
+  const f=document.getElementById('rankup-flash');
+  document.getElementById('rankup-letter').textContent=`RANK ${rank.id}`;
+  document.getElementById('rankup-letter').style.color=rank.color;
+  document.getElementById('rankup-name').textContent=rank.name;
+  f.classList.add('show');
+  toast(`⚡ RANK UP → ${rank.id} · ${rank.name}`,'rank',4000);
+  setTimeout(()=>f.classList.remove('show'),2000);
+}
+
+/* ══════════ ACTIONS ══════════ */
+function gainXP(amount,label,icon='⚔️'){
+  const old=state.player.xp;
+  const nw=Math.max(0,old+amount);
+  state.player={...state.player,xp:nw};
+  logHistory({icon,desc:label,xp:amount,ts:Date.now()});
+  checkRankUp(old,nw);
+  save();
+  if(amount>0)toast(`+${fmtXP(amount)} XP — ${label}`,'xp');
+  else toast(`${fmtXP(amount)} XP — ${label}`,'bad');
+}
+function gainCoins(amount,label){
+  state.player={...state.player,coins:Math.max(0,state.player.coins+amount)};
+  save();
+  if(amount>0)toast(`+${amount} ⬡ — ${label}`,'coins');
+}
+function logHistory(entry){
+  state.history=[entry,...state.history].slice(0,120);save();
+}
+
+function toggleMission(id){
+  state.missions=state.missions.map(m=>{
+    if(m.id!==id)return m;
+    const d=getDiff(m.diff);
+    if(!m.done){gainXP(d.xp,m.title,'⚔️');gainCoins(d.coins,m.title);return{...m,done:true};}
+    else{gainXP(-d.xp,`(desfeito) ${m.title}`,'↩️');gainCoins(-d.coins,m.title);return{...m,done:false};}
+  });
+  setState({missions:state.missions});
+}
+function deleteMission(id){setState({missions:state.missions.filter(m=>m.id!==id)});toast('Missão removida','ok')}
+
+function toggleHabit(type,id){
+  const habits={...state.habits};
+  habits[type]=habits[type].map(h=>{
+    if(h.id!==id)return h;
+    const xpVal=type==='good'?h.xp:-h.xp;
+    if(!h.checked){
+      gainXP(xpVal,h.name,type==='good'?'✦':'⚠️');
+      if(type==='good')gainCoins(Math.floor(h.xp/10),h.name);
+      return{...h,checked:true};
+    }else{
+      gainXP(-xpVal,`(desfeito) ${h.name}`,'↩️');
+      if(type==='good')gainCoins(-Math.floor(h.xp/10),h.name);
+      return{...h,checked:false};
+    }
+  });
+  setState({habits});
+}
+function deleteHabit(type,id){const h={...state.habits};h[type]=h[type].filter(x=>x.id!==id);setState({habits:h})}
+
+function buyItem(id){
+  const item=state.shop.find(i=>i.id===id);
+  if(!item||state.player.coins<item.cost)return;
+  state.player={...state.player,coins:state.player.coins-item.cost};
+  logHistory({icon:item.icon,desc:`Resgatou: ${item.name}`,xp:0,ts:Date.now()});
+  save();render();
+  toast(`${item.icon} "${item.name}" resgatado!`,'ok',3000);
+}
+function deleteShopItem(id){setState({shop:state.shop.filter(i=>i.id!==id)})}
+
+function resetDay(){
+  state.missions=state.missions.map(m=>m.type==='Diária'?{...m,done:false}:m);
+  state.habits={good:state.habits.good.map(h=>({...h,checked:false})),bad:state.habits.bad.map(h=>({...h,checked:false}))};
+  setState({missions:state.missions,habits:state.habits});
+  toast('Dia reiniciado — bora!','ok');
+}
+
+/* ══════════ MODAL ══════════ */
+function openModal(type,payload={}){state.modal={type,...payload};renderModal()}
+function closeModal(){state.modal=null;const a=document.getElementById('modal-area');if(a)a.innerHTML=''}
+
+/* ══════════ RENDER ══════════ */
+function render(){
+  const root=document.getElementById('root');
+  if(!root)return;
+  root.innerHTML=`
+    ${renderHeader()}
+    <nav class="top-nav">${renderNavBtns('tnav-btn')}</nav>
+    <div class="content" id="tab-content">${renderTab()}</div>
+    <div id="modal-area"></div>
+    <nav class="bottom-nav">${renderNavBtns('bnav-btn')}</nav>
+  `;
+  attachListeners();
+  renderModal();
+  if(state.tab==='profile')requestAnimationFrame(()=>{
+    setTimeout(()=>{const b=document.getElementById('xp-bar');if(b)b.style.width=getXpProgress(state.player.xp)+'%'},50);
+  });
+}
+
+function renderHeader(){
+  const rank=getRank(state.player.xp);
+  return`<header class="header">
+    <div class="logo">PRÓXIMO <em>NÍVEL</em></div>
+    <div class="header-right">
+      <span class="hchip hchip-xp">${fmtXP(state.player.xp)} XP</span>
+      <span class="hchip hchip-coins">${state.player.coins.toLocaleString('pt-BR')} ⬡</span>
+      <div class="header-rank" style="color:${rank.color};border-color:${rank.color};box-shadow:0 0 8px ${rank.color}">${rank.tier}</div>
+      <div id="sync-dot" title="Sincronizando..." style="width:8px;height:8px;border-radius:50%;background:#6a85a8;flex-shrink:0;transition:all .4s"></div>
+    </div>
+  </header>`;
+}
+
+const NAV_ITEMS=[
+  {id:'profile', icon:'👤', label:'Perfil'},
+  {id:'missions',icon:'⚔️', label:'Missões'},
+  {id:'habits',  icon:'✦',  label:'Hábitos'},
+  {id:'shop',    icon:'🏆', label:'Loja'},
+  {id:'ranks',   icon:'📊', label:'Ranks'},
+];
+
+function renderNavBtns(cls){
+  const pending=state.missions.filter(m=>!m.done).length;
+  return NAV_ITEMS.map(t=>{
+    const badge=t.id==='missions'&&pending?`<span class="bnav-badge">${pending}</span>`:'';
+    if(cls==='bnav-btn')return`<button class="${cls} ${state.tab===t.id?'active':''}" data-tab="${t.id}">${badge}<span class="bnav-icon">${t.icon}</span>${esc(t.label)}</button>`;
+    const tbadge=t.id==='missions'&&pending?`<span class="tbadge">${pending}</span>`:'';
+    return`<button class="${cls} ${state.tab===t.id?'active':''}" data-tab="${t.id}">${t.icon} ${esc(t.label)}${tbadge}</button>`;
+  }).join('');
+}
+
+function renderTab(){
+  switch(state.tab){
+    case'profile':  return tProfile();
+    case'missions': return tMissions();
+    case'habits':   return tHabits();
+    case'shop':     return tShop();
+    case'ranks':    return tRanks();
+  }return'';
+}
+
+/* ── Profile ── */
+function tProfile(){
+  const {xp,coins,name}=state.player;
+  const rank=getRank(xp);
+  const prog=getXpProgress(xp);
+  const nextRank=RANKS[RANKS.indexOf(rank)+1];
+  const mDone=state.missions.filter(m=>m.done).length;
+  const hDone=state.habits.good.filter(h=>h.checked).length;
+  const todayXp=state.missions.filter(m=>m.done).reduce((a,m)=>a+getDiff(m.diff).xp,0)
+               +state.habits.good.filter(h=>h.checked).reduce((a,h)=>a+h.xp,0)
+               -state.habits.bad.filter(h=>h.checked).reduce((a,h)=>a+h.xp,0);
+
+  const rankIdx=RANKS.indexOf(rank);
+  const tierRanks=RANKS.filter(r=>r.tier===rank.tier);
+  const visRanks=RANKS.slice(Math.max(0,rankIdx-2),Math.min(RANKS.length,rankIdx+8));
+
+  return`
+  <div class="profile-hero">
+    <div class="profile-top">
+      <div class="avatar-wrap">
+        <div class="avatar" data-action="editName">${esc(name.charAt(0).toUpperCase())}</div>
+        <div class="avatar-rank" style="background:${rank.color};color:#060a12">${rank.tier}</div>
+      </div>
+      <div class="profile-meta">
+        <div class="profile-name" data-action="editName">${esc(name)}</div>
+        <div class="profile-title" style="color:${rank.color}">${esc(rank.name)} · ${rank.id}</div>
+        <div class="profile-stats">
+          <div><span class="pstat-val">${fmtXP(xp)}</span><div class="pstat-label">XP Total</div></div>
+          <div><span class="pstat-val gold">${coins.toLocaleString('pt-BR')}</span><div class="pstat-label">Coins</div></div>
+          <div><span class="pstat-val purple">${mDone+hDone}</span><div class="pstat-label">Hoje</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="xp-header">
+      <span class="xp-label">→ ${nextRank?nextRank.id+' · '+nextRank.name:'RANK MÁXIMO'}</span>
+      <span class="xp-pct">${prog}%</span>
+    </div>
+    <div class="xp-track"><div class="xp-fill" id="xp-bar" style="width:0%"></div></div>
+    <div class="xp-sub">${nextRank?fmtXP(nextRank.xpMin-xp)+' XP restantes':'Você chegou ao topo!'}</div>
+    <div class="ranks-scroll">
+      <div class="ranks-row">
+        ${visRanks.map(r=>{
+          const unlocked=xp>=r.xpMin;
+          const current=rank.id===r.id;
+          return`<div class="rank-pip ${current?'current':unlocked?'unlocked':''}" style="color:${r.color}">
+            <span class="rank-pip-letter">${r.id}</span>
+            <div class="rank-pip-name">${r.name.split(' ')[0]}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><span class="stat-card-icon">⚔️</span><span class="stat-card-val" style="color:var(--blue)">${mDone}/${state.missions.length}</span><div class="stat-card-label">Missões hoje</div></div>
+    <div class="stat-card"><span class="stat-card-icon">✦</span><span class="stat-card-val" style="color:var(--green)">${hDone}/${state.habits.good.length}</span><div class="stat-card-label">Hábitos bons</div></div>
+    <div class="stat-card"><span class="stat-card-icon">📈</span><span class="stat-card-val" style="color:${todayXp>=0?'var(--green)':'var(--red)'}">${todayXp>=0?'+':''}${fmtXP(todayXp)}</span><div class="stat-card-label">XP de hoje</div></div>
+    <div class="stat-card"><span class="stat-card-icon">🏆</span><span class="stat-card-val" style="color:var(--gold)">${state.history.length}</span><div class="stat-card-label">Ações totais</div></div>
+  </div>
+
+  <div class="section-head gap-top">
+    <span class="section-title">Dia</span>
+    <button class="btn btn-ghost btn-sm" data-action="resetDay">↺ Reiniciar dia</button>
+  </div>
+  <p style="font-size:12px;color:var(--text-muted);margin-top:3px">Reinicia hábitos e missões do tipo "Diária".</p>
+  `;
+}
+
+/* ── Missions ── */
+function tMissions(){
+  const active=state.missions.filter(m=>!m.done);
+  const done=state.missions.filter(m=>m.done);
+  return`
+  <div class="section-head">
+    <span class="section-title">Missões</span>
+    <button class="btn btn-primary btn-sm" data-action="openMissionModal">+ Nova</button>
+  </div>
+  ${active.length===0?`<div class="empty-state"><strong>⚔️</strong>Nenhuma missão pendente.</div>`:''}
+  ${active.map(mCard).join('')}
+  ${done.length>0?`<div class="section-head gap-top"><span class="section-title">Concluídas</span></div>${done.map(mCard).join('')}`:''}
+  `;
+}
+function mCard(m){
+  const d=getDiff(m.diff);
+  return`<div class="mission-card ${m.done?'done':''}" data-mission-toggle="${m.id}">
+    <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${d.color};border-radius:2px 0 0 2px;opacity:${m.done?.3:.8}"></div>
+    <div class="mission-check">${m.done?'✓':''}</div>
+    <div class="mission-info">
+      <div class="mission-title">${esc(m.title)}</div>
+      <div class="mission-meta">
+        <span class="diff-chip" style="background:${d.bg};color:${d.color};border:1px solid ${d.border}">${d.label}</span>
+        <span class="reward-chip" style="background:rgba(61,143,255,.08);color:var(--blue)">+${fmtXP(d.xp)} XP</span>
+        <span class="reward-chip" style="background:rgba(232,197,90,.08);color:var(--gold)">+${d.coins}⬡</span>
+        <span class="type-chip">${esc(m.type)}</span>
+      </div>
+    </div>
+    <button class="btn-icon" data-mission-delete="${m.id}">✕</button>
+  </div>`;
+}
+
+/* ── Habits ── */
+function tHabits(){
+  return`<div class="habit-cols">
+    <div>
+      <div class="habit-col-title" style="color:var(--green)">▲ Bons Hábitos</div>
+      ${state.habits.good.map(h=>hCard(h,'good')).join('')}
+      <button class="btn btn-primary btn-sm gap-top-sm" style="width:100%;justify-content:center" data-action="openHabitModal" data-habit-type="good">+ Adicionar</button>
+    </div>
+    <div>
+      <div class="habit-col-title" style="color:var(--red)">▼ Maus Hábitos</div>
+      ${state.habits.bad.map(h=>hCard(h,'bad')).join('')}
+      <button class="btn btn-danger btn-sm gap-top-sm" style="width:100%;justify-content:center" data-action="openHabitModal" data-habit-type="bad">+ Adicionar</button>
+    </div>
+  </div>`;
+}
+function hCard(h,type){
+  const g=type==='good';
+  const cls=h.checked?(g?'checked-good':'checked-bad'):'';
+  return`<div class="habit-card ${cls}" data-habit-toggle="${type}:${h.id}">
+    <div class="habit-toggle">${h.checked?(g?'✓':'✕'):''}</div>
+    <span class="habit-name">${esc(h.name)}</span>
+    <span class="habit-xp" style="color:${g?'var(--green)':'var(--red)'}">${g?'+':'-'}${h.xp}</span>
+    <button class="btn-icon" data-habit-delete="${type}:${h.id}">✕</button>
+  </div>`;
+}
+
+/* ── Shop ── */
+function tShop(){
+  return`
+  <div class="section-head">
+    <span class="section-title">Loja</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span style="font-family:var(--font-mono);font-size:12px;color:var(--gold)">${state.player.coins.toLocaleString('pt-BR')} ⬡</span>
+      <button class="btn btn-gold btn-sm" data-action="openShopModal">+ Adicionar</button>
+    </div>
+  </div>
+  <div class="shop-grid">
+    ${state.shop.map(item=>{
+      const cant=state.player.coins<item.cost;
+      return`<div class="shop-card ${cant?'cant-afford':''}">
+        <div class="shop-icon">${item.icon}</div>
+        <div class="shop-name">${esc(item.name)}</div>
+        <div class="shop-cat">${esc(item.cat)}</div>
+        <div class="shop-cost">${item.cost.toLocaleString('pt-BR')} ⬡</div>
+        <div style="display:flex;gap:5px;width:100%">
+          <button class="btn btn-gold btn-sm" style="flex:1;justify-content:center" ${cant?'disabled':''} data-shop-buy="${item.id}">${cant?'Sem coins':'Resgatar'}</button>
+          <button class="btn-icon" data-shop-delete="${item.id}">✕</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ── Ranks Table ── */
+function tRanks(){
+  const cur=getRank(state.player.xp);
+  const TIER_COLORS={'E':'#6a85a8','D':'#3dffb0','C':'#3d8fff','B':'#a87fff','A':'#ff8c3d','S':'#e8c55a'};
+  let lastTier='';
+  return`
+  <div class="section-head">
+    <span class="section-title">55 Ranks</span>
+    <span style="font-size:11px;color:var(--text-muted)">Atual: <b style="color:${cur.color}">${cur.id}</b></span>
+  </div>
+  <div style="overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)">
+  <table class="ranks-table">
+    <thead><tr><th>Rank</th><th>Nome</th><th>XP Mínimo</th><th>Gap</th></tr></thead>
+    <tbody>
+    ${RANKS.map((r,i)=>{
+      const isCur=r.id===cur.id;
+      const unlocked=state.player.xp>=r.xpMin;
+      const gap=r.xpNext?fmtXP(r.xpNext-r.xpMin):'—';
+      const sep=r.tier!==lastTier?`<tr><td colspan="4" style="background:rgba(0,0,0,.3);padding:4px 10px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:${TIER_COLORS[r.tier]};font-weight:700">Tier ${r.tier}</td></tr>`:'';
+      lastTier=r.tier;
+      return`${sep}<tr class="${isCur?'rank-row-current':''}">
+        <td class="rank-id-cell" style="color:${r.color};${isCur?'text-shadow:0 0 8px '+r.color:''}">${r.id}${isCur?' ◀':''}</td>
+        <td class="rank-name-cell" style="opacity:${unlocked?1:.4}">${esc(r.name)}</td>
+        <td class="rank-xp-cell">${fmtXP(r.xpMin)}</td>
+        <td class="rank-xp-cell">${gap}</td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>
+  </div>
+  `;
+}
+
+/* ══════════ MODAL RENDER ══════════ */
+function renderModal(){
+  const area=document.getElementById('modal-area');
+  if(!area||!state.modal){if(area)area.innerHTML='';return}
+  const{type}=state.modal;
+
+  if(type==='mission'){
+    area.innerHTML=`<div class="modal-overlay" id="mo">
+      <div class="modal">
+        <div class="modal-title">⚔️ Nova Missão</div>
+        <div class="form-group"><label class="form-label">Nome da Missão</label>
+          <input class="form-input" id="m-title" type="text" placeholder="Ex: Treinar 1 hora..." maxlength="100"/></div>
+        <div class="form-group"><label class="form-label">Dificuldade</label>
+          <div class="diff-picker" id="dpick">
+            ${DIFFS.map(d=>`<button class="diff-pick-btn" data-diff="${d.id}" style="color:${d.color}">${d.label}<br><span style="font-size:9px;opacity:.7">${fmtXP(d.xp)} XP</span></button>`).join('')}
+          </div>
+          <input type="hidden" id="m-diff" value="normal"/>
+        </div>
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-select" id="m-type">${TYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Notas (opcional)</label>
+          <textarea class="form-textarea" id="m-notes" placeholder="Detalhes..." maxlength="300"></textarea></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" style="flex:1;justify-content:center" id="mc">Cancelar</button>
+          <button class="btn btn-primary" style="flex:2;justify-content:center" id="mok">Criar Missão</button>
+        </div>
+      </div></div>`;
+    document.getElementById('mo').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+    document.getElementById('mc').addEventListener('click',closeModal);
+    document.getElementById('mok').addEventListener('click',()=>{
+      const title=document.getElementById('m-title').value.trim();if(!title)return;
+      const diff=document.getElementById('m-diff').value;
+      const type=document.getElementById('m-type').value;
+      const notes=document.getElementById('m-notes').value.trim();
+      setState({missions:[...state.missions,{id:uid(),title,diff,type,notes,done:false}],modal:null});
+      toast('Missão criada!','ok');
+    });
+    const dpick=document.getElementById('dpick');
+    dpick.addEventListener('click',e=>{
+      const btn=e.target.closest('[data-diff]');if(!btn)return;
+      dpick.querySelectorAll('.diff-pick-btn').forEach(b=>{b.style.borderColor='var(--border)';b.style.background='var(--bg)'});
+      const d=getDiff(btn.dataset.diff);
+      btn.style.borderColor=d.color;btn.style.background=d.bg;
+      document.getElementById('m-diff').value=btn.dataset.diff;
+    });
+    const nb=dpick.querySelector('[data-diff="normal"]');
+    if(nb){const d=getDiff('normal');nb.style.borderColor=d.color;nb.style.background=d.bg}
+  }
+
+  else if(type==='habit'){
+    const g=state.modal.habitType==='good';
+    area.innerHTML=`<div class="modal-overlay" id="mo">
+      <div class="modal">
+        <div class="modal-title">${g?'✦ Bom Hábito':'⚠️ Mau Hábito'}</div>
+        <div class="form-group"><label class="form-label">Nome</label>
+          <input class="form-input" id="h-name" type="text" placeholder="${g?'Ex: Beber 2L de água':'Ex: Celular demais'}" maxlength="60"/></div>
+        <div class="form-group"><label class="form-label">XP ${g?'ganho':'perdido'}</label>
+          <input class="form-input" id="h-xp" type="number" placeholder="100" min="10" max="1000" value="100"/></div>
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <select class="form-select" id="h-cat">${CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" style="flex:1;justify-content:center" id="mc">Cancelar</button>
+          <button class="btn btn-primary" style="flex:2;justify-content:center" id="mok">Adicionar</button>
+        </div>
+      </div></div>`;
+    document.getElementById('mo').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+    document.getElementById('mc').addEventListener('click',closeModal);
+    document.getElementById('mok').addEventListener('click',()=>{
+      const name=document.getElementById('h-name').value.trim();if(!name)return;
+      const xp=Math.abs(parseInt(document.getElementById('h-xp').value)||100);
+      const cat=document.getElementById('h-cat').value;
+      const ht=state.modal.habitType;
+      const habits={...state.habits};
+      habits[ht]=[...habits[ht],{id:uid(),name,xp,cat,checked:false}];
+      setState({habits,modal:null});toast('Hábito adicionado!','ok');
+    });
+  }
+
+  else if(type==='shop'){
+    area.innerHTML=`<div class="modal-overlay" id="mo">
+      <div class="modal">
+        <div class="modal-title">🏆 Nova Recompensa</div>
+        <div class="form-group"><label class="form-label">Nome</label>
+          <input class="form-input" id="s-name" type="text" placeholder="Ex: Assistir um filme" maxlength="50"/></div>
+        <div class="form-group"><label class="form-label">Emoji</label>
+          <input class="form-input" id="s-icon" type="text" placeholder="🎁" maxlength="4" value="🎁"/></div>
+        <div class="form-group"><label class="form-label">Custo (Coins)</label>
+          <input class="form-input" id="s-cost" type="number" placeholder="500" min="1" value="500"/></div>
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <select class="form-select" id="s-cat">${SCATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" style="flex:1;justify-content:center" id="mc">Cancelar</button>
+          <button class="btn btn-gold" style="flex:2;justify-content:center" id="mok">Adicionar</button>
+        </div>
+      </div></div>`;
+    document.getElementById('mo').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+    document.getElementById('mc').addEventListener('click',closeModal);
+    document.getElementById('mok').addEventListener('click',()=>{
+      const name=document.getElementById('s-name').value.trim();if(!name)return;
+      const icon=document.getElementById('s-icon').value.trim()||'🎁';
+      const cost=Math.abs(parseInt(document.getElementById('s-cost').value)||100);
+      const cat=document.getElementById('s-cat').value;
+      setState({shop:[...state.shop,{id:uid(),name,icon,cost,cat}],modal:null});
+      toast('Recompensa adicionada!','ok');
+    });
+  }
+
+  else if(type==='editName'){
+    area.innerHTML=`<div class="modal-overlay" id="mo">
+      <div class="modal">
+        <div class="modal-title">✏️ Nome do Personagem</div>
+        <div class="form-group"><label class="form-label">Seu nome</label>
+          <input class="form-input" id="p-name" type="text" value="${esc(state.player.name)}" maxlength="30"/></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" style="flex:1;justify-content:center" id="mc">Cancelar</button>
+          <button class="btn btn-primary" style="flex:2;justify-content:center" id="mok">Salvar</button>
+        </div>
+      </div></div>`;
+    const inp=document.getElementById('p-name');inp.focus();inp.select();
+    document.getElementById('mo').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+    document.getElementById('mc').addEventListener('click',closeModal);
+    document.getElementById('mok').addEventListener('click',()=>{
+      const name=document.getElementById('p-name').value.trim()||'Caçador';
+      setState({player:{...state.player,name},modal:null});
+    });
+  }
+}
+
+/* ══════════ EVENT DELEGATION ══════════ */
+function attachListeners(){
+  document.addEventListener('click',handleClick,{once:true});
+}
+function handleClick(e){
+  document.addEventListener('click',handleClick,{once:true});
+  const t=e.target;
+
+  const tab=t.closest('[data-tab]');
+  if(tab&&(tab.closest('.bottom-nav')||tab.closest('.top-nav'))){setState({tab:tab.dataset.tab},true);render();return}
+
+  const mt=t.closest('[data-mission-toggle]');
+  if(mt&&!t.closest('[data-mission-delete]')){toggleMission(mt.dataset.missionToggle);return}
+  const md=t.closest('[data-mission-delete]');
+  if(md){e.stopPropagation();deleteMission(md.dataset.missionDelete);return}
+
+  const ht=t.closest('[data-habit-toggle]');
+  if(ht&&!t.closest('[data-habit-delete]')){const[ty,id]=ht.dataset.habitToggle.split(':');toggleHabit(ty,id);return}
+  const hd=t.closest('[data-habit-delete]');
+  if(hd){e.stopPropagation();const[ty,id]=hd.dataset.habitDelete.split(':');deleteHabit(ty,id);return}
+
+  const sb=t.closest('[data-shop-buy]');if(sb){buyItem(sb.dataset.shopBuy);return}
+  const sd=t.closest('[data-shop-delete]');if(sd){deleteShopItem(sd.dataset.shopDelete);return}
+
+  const act=t.closest('[data-action]');
+  if(act){
+    const a=act.dataset.action;
+    if(a==='openMissionModal')openModal('mission');
+    else if(a==='openHabitModal')openModal('habit',{habitType:act.dataset.habitType});
+    else if(a==='openShopModal')openModal('shop');
+    else if(a==='editName')openModal('editName');
+    else if(a==='resetDay')resetDay();
+  }
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&state.modal)closeModal();
+  if(e.key==='Enter'&&state.modal){
+    const ok=document.getElementById('mok');
+    if(ok&&document.activeElement?.tagName!=='TEXTAREA')ok.click();
+  }
+});
+
+/* ══════════ CANVAS PARTICLES ══════════ */
+(function(){
+  const cv=document.getElementById('bg-canvas'),ctx=cv.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}
+  function mkpt(){return{x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+.3,vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.12,a:Math.random()*.45+.08,c:Math.random()>.7?'#3d8fff':'#1c2d4a'}}
+  function init(){resize();pts=Array.from({length:50},mkpt)}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of pts){
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.c;ctx.globalAlpha=p.a;ctx.fill();
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+    }
+    ctx.globalAlpha=1;requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize);
+  init();draw();
+})();
+
+render();
+// Inicia sync em tempo real com Firebase
+startSync();
+
+/* ══════════ PWA — Service Worker + Install Prompt ══════════ */
+// Registra SW
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => {
+        console.log('SW registrado:', reg.scope);
+        // Verifica update a cada 30min
+        setInterval(() => reg.update(), 30 * 60 * 1000);
+      })
+      .catch(err => console.warn('SW falhou:', err));
+  });
+}
+
+// Captura evento de instalação e mostra botão no header
+let _deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _deferredInstall = e;
+  // Mostra botão flutuante de instalação
+  const btn = document.createElement('button');
+  btn.id = 'pwa-install-btn';
+  btn.innerHTML = '⬇ Instalar App';
+  btn.style.cssText = `
+    position:fixed;bottom:calc(var(--bottom-nav) + 12px);right:14px;z-index:300;
+    font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:1.5px;
+    text-transform:uppercase;padding:9px 16px;border-radius:8px;cursor:pointer;
+    background:#060a12;border:1px solid #3d8fff;color:#3d8fff;
+    box-shadow:0 0 16px rgba(61,143,255,.3);animation:toastIn .3s ease;
+  `;
+  btn.addEventListener('click', async () => {
+    if (!_deferredInstall) return;
+    _deferredInstall.prompt();
+    const { outcome } = await _deferredInstall.userChoice;
+    if (outcome === 'accepted') btn.remove();
+    _deferredInstall = null;
+  });
+  document.body.appendChild(btn);
+});
+
+// Remove botão quando já instalado
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-install-btn')?.remove();
+  _deferredInstall = null;
+  toast('App instalado com sucesso! 🎉', 'ok', 4000);
+});
+</script>
+</body>
+</html>
