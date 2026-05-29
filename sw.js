@@ -3,7 +3,7 @@
    Estratégia: Cache First para assets, Network First para Firebase
 ═══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'proximo-nivel-v2';
+const CACHE_NAME = 'proximo-nivel-v3';
 
 // Assets que queremos cachear para uso offline
 const PRECACHE = [
